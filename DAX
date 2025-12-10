@@ -1,0 +1,113 @@
+-- =========================
+-- Core volume measures
+-- =========================
+
+No of Patients =
+COUNTROWS ( 'Hospital ER_Data' )
+
+No of Patients Referred =
+CALCULATE (
+    COUNTROWS ( 'Hospital ER_Data' ),
+    NOT ISBLANK ( 'Hospital ER_Data'[Department Referral] ),
+    'Hospital ER_Data'[Department Referral] <> "None"
+)
+
+-- =========================
+-- Wait time and timeliness
+-- =========================
+
+Avg Wait Time =
+AVERAGE ( 'Hospital ER_Data'[Patient Waittime] )
+
+Patients Seen Within 30 Min =
+CALCULATE (
+    COUNTROWS ( 'Hospital ER_Data' ),
+    'Hospital ER_Data'[Patient Waittime] <= 30
+)
+
+% Patients Seen Within 30 Min =
+DIVIDE (
+    [Patients Seen Within 30 Min],
+    [No of Patients]
+)
+
+Waiting status bucket (for donut)
+Waiting Status =
+VAR wt = 'Hospital ER_Data'[Patient Waittime]
+RETURN
+    SWITCH (
+        TRUE (),
+        ISBLANK ( wt ), "Unknown",
+        wt <= 30, "Within Target",
+        "Target Missed"
+    )
+
+-- =========================
+-- Satisfaction
+-- =========================
+
+Patient Satisfaction Score =
+AVERAGE ( 'Hospital ER_Data'[Patient Satisfaction Score] )
+
+-- =========================
+-- Admission metrics
+-- =========================
+
+No of Patients Admitted =
+CALCULATE (
+    COUNTROWS ( 'Hospital ER_Data' ),
+    'Hospital ER_Data'[Patient Admission Flag] = TRUE ()
+)
+
+No of Patients Not Admitted =
+CALCULATE (
+    COUNTROWS ( 'Hospital ER_Data' ),
+    'Hospital ER_Data'[Patient Admission Flag] = FALSE ()
+)
+
+Admission Rate % =
+DIVIDE (
+    [No of Patients Admitted],
+    [No of Patients]
+)
+
+-- =========================
+-- Age and other groupings
+-- =========================
+
+Age Group =                    -- Calculated column
+SWITCH (
+    TRUE (),
+    'Hospital ER_Data'[Patient Age] < 10, "0-9",
+    'Hospital ER_Data'[Patient Age] < 20, "10-19",
+    'Hospital ER_Data'[Patient Age] < 30, "20-29",
+    'Hospital ER_Data'[Patient Age] < 40, "30-39",
+    'Hospital ER_Data'[Patient Age] < 50, "40-49",
+    'Hospital ER_Data'[Patient Age] < 60, "50-59",
+    'Hospital ER_Data'[Patient Age] < 70, "60-69",
+    "70-79"
+)
+
+Waittime Interval =            -- Calculated column (optional for heatmap/extra charts)
+SWITCH (
+    TRUE (),
+    'Hospital ER_Data'[Patient Waittime] <= 15, "0–15 min",
+    'Hospital ER_Data'[Patient Waittime] <= 30, "16–30 min",
+    'Hospital ER_Data'[Patient Waittime] <= 60, "31–60 min",
+    "60+ min"
+)
+
+-- =========================
+-- Date intelligence helpers
+-- (assuming a separate 'Date Table' marked as date table
+-- and related to 'Hospital ER_Data'[Patient Admission Date])
+-- =========================
+
+No of Patients (Distinct Days) =
+DISTINCTCOUNT ( 'Date Table'[Date] )
+
+Patients per Day =
+DIVIDE (
+    [No of Patients],
+    [No of Patients (Distinct Days)]
+)
