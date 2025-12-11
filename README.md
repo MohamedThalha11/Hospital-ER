@@ -95,5 +95,4 @@ If you have feedback or would like to discuss this project:
 - **Name:** *Mohamed Thalha* 
 - **Email:** *mohamedthalha110@gmail.com*  
 - **LinkedIn:** *www.linkedin.com/in/mohamed-thalha-8b6a18267*  
-- **Portfolio / GitHub:** *https://github.com/your‑username*
 
